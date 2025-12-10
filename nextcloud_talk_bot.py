@@ -98,22 +98,29 @@ class NextcloudTalkBot:
         """Holt die letzten Nachrichten einer Konversation."""
         # Versuche verschiedene API-Endpunkte
         endpoints = [
-            f"{self.base_url}/ocs/v2.php/apps/spreed/api/v1/chat/{token}",
-            f"{self.base_url}/ocs/v2.php/apps/spreed/api/v4/chat/{token}",
+            (f"{self.base_url}/ocs/v2.php/apps/spreed/api/v1/chat/{token}", "v1"),
+            (f"{self.base_url}/ocs/v2.php/apps/spreed/api/v4/chat/{token}", "v4"),
         ]
         
-        for url in endpoints:
+        for url, version in endpoints:
             params = {'limit': limit}
             try:
                 response = self.session.get(url, params=params)
                 
                 # Prüfe Status Code
                 if response.status_code == 500:
+                    print(f"    → API {version}: Status 500 (Server-Fehler)")
                     # Versuche nächsten Endpoint
                     continue
                 
                 if response.status_code == 404:
-                    # Endpoint existiert nicht, versuche nächsten
+                    print(f"    → API {version}: Status 404 (Nicht gefunden)")
+                    # Versuche nächsten Endpoint
+                    continue
+                
+                if response.status_code == 403:
+                    print(f"    → API {version}: Status 403 (Keine Berechtigung)")
+                    # Versuche nächsten Endpoint
                     continue
                 
                 response.raise_for_status()
@@ -121,27 +128,34 @@ class NextcloudTalkBot:
                 # Prüfe Content-Type
                 content_type = response.headers.get('Content-Type', '')
                 if 'application/json' not in content_type:
+                    print(f"    → API {version}: Kein JSON (Content-Type: {content_type})")
                     continue
                 
                 data = response.json()
                 if 'ocs' in data and 'data' in data['ocs']:
-                    return data['ocs']['data']
+                    messages = data['ocs']['data']
+                    print(f"    → API {version}: {len(messages)} Nachrichten gefunden")
+                    return messages
                 elif isinstance(data, list):
                     # Manche APIs geben direkt eine Liste zurück
+                    print(f"    → API {version}: {len(data)} Nachrichten gefunden (direkte Liste)")
                     return data
+                else:
+                    print(f"    → API {version}: Unerwartete Datenstruktur: {type(data)}")
                     
             except requests.exceptions.HTTPError as e:
-                if response.status_code in [404, 500]:
+                if response.status_code in [404, 500, 403]:
                     # Versuche nächsten Endpoint
                     continue
-                print(f"HTTP Fehler beim Abrufen der Nachrichten für {token}: {e}")
+                print(f"    → API {version}: HTTP Fehler: {e}")
                 return []
             except Exception as e:
+                print(f"    → API {version}: Exception: {e}")
                 # Versuche nächsten Endpoint
                 continue
         
-        # Alle Endpoints fehlgeschlagen - möglicherweise Berechtigungsproblem
-        # Gebe keine Warnung aus, da dies bei vielen Konversationen zu viel Output erzeugt
+        # Alle Endpoints fehlgeschlagen
+        print(f"    → Alle API-Endpunkte fehlgeschlagen für {token}")
         return []
     
     def send_message(self, token, message):
