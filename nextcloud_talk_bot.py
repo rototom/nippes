@@ -97,8 +97,10 @@ class NextcloudTalkBot:
     def get_messages(self, token, limit=50):
         """Holt die letzten Nachrichten einer Konversation."""
         # Versuche verschiedene API-Endpunkte
+        # Hinweis: Für direkte Chats (Typ 1) könnte ein anderer Endpoint benötigt werden
         endpoints = [
             (f"{self.base_url}/ocs/v2.php/apps/spreed/api/v1/chat/{token}", "v1"),
+            (f"{self.base_url}/ocs/v2.php/apps/spreed/api/v3/chat/{token}", "v3"),
             (f"{self.base_url}/ocs/v2.php/apps/spreed/api/v4/chat/{token}", "v4"),
         ]
         
@@ -110,6 +112,18 @@ class NextcloudTalkBot:
                 # Prüfe Status Code
                 if response.status_code == 500:
                     print(f"    → API {version}: Status 500 (Server-Fehler)")
+                    # Versuche Fehlermeldung aus der Antwort zu extrahieren
+                    try:
+                        error_data = response.json()
+                        if 'ocs' in error_data and 'meta' in error_data['ocs']:
+                            error_msg = error_data['ocs']['meta'].get('message', 'Unbekannter Fehler')
+                            print(f"      Fehlermeldung: {error_msg}")
+                        elif 'message' in error_data:
+                            print(f"      Fehlermeldung: {error_data['message']}")
+                        else:
+                            print(f"      Response: {response.text[:200]}")
+                    except:
+                        print(f"      Response: {response.text[:200]}")
                     # Versuche nächsten Endpoint
                     continue
                 
