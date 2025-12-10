@@ -7,7 +7,7 @@ import json
 import os
 from threading import Lock
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 # Cache-Datei für geschlossene Daten
 CACHE_FILE = '/root/nippes/closed_dates_cache.json'

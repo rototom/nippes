@@ -18,6 +18,11 @@ Eine einfache Webseite, die anzeigt, ob das Nippes in Münster heute geöffnet i
 pip install -r requirements.txt
 ```
 
+3. PWA-Icons generieren:
+```bash
+python3 create_png_icons.py
+```
+
 ## Verwendung
 
 ### Entwicklung
@@ -59,10 +64,23 @@ sudo journalctl -u nippes.service -f
 - **Web Scraping**: BeautifulSoup4, Requests
 - **Frontend**: HTML/CSS mit modernem Design
 - **Production Server**: Gunicorn
+- **PWA**: Progressive Web App mit Service Worker und Manifest
+- **Icons**: PNG-Icons mit Bier-Emoji 🍺
+
+## PWA Installation
+
+Die App kann als Progressive Web App (PWA) auf mobilen Geräten und Desktop-Browsern installiert werden:
+
+- **Chrome/Edge**: Klicke auf das Install-Symbol in der Adressleiste
+- **Safari (iOS)**: Tippe auf "Teilen" → "Zum Home-Bildschirm hinzufügen"
+- **Firefox**: Klicke auf das Menü → "Seite installieren"
+
+Nach der Installation erscheint die App wie eine native App mit eigenem Icon (🍺) und kann offline verwendet werden.
 
 ## Hinweise
 
 - Die Anwendung crawlt die offizielle Website des Nippes, um aktuelle Termine zu erhalten
 - Bei Netzwerkproblemen oder wenn die Website nicht erreichbar ist, werden geschlossene Gesellschaften möglicherweise nicht erkannt
 - Die Öffnungszeiten sind fest auf Mittwoch bis Samstag eingestellt
+- Die Daten werden täglich automatisch aktualisiert (Caching)
 Nippes Öffnungszeiten Crawler

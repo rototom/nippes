@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ist das Nippes heute geöffnet?</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Prüfe, ob das Nippes in Münster heute geöffnet ist">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Nippes Status">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍺</text></svg>">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
     <style>
         * {
             margin: 0;
@@ -140,6 +154,44 @@
         </div>
         {% endif %}
     </div>
+    
+    <script>
+        // Service Worker Registration für PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registriert:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Service Worker Registrierung fehlgeschlagen:', error);
+                    });
+            });
+        }
+        
+        // Install Prompt für PWA
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Optional: Zeige einen Install-Button
+            showInstallButton();
+        });
+        
+        function showInstallButton() {
+            // Erstelle einen Install-Button, falls gewünscht
+            // Kann später erweitert werden
+        }
+        
+        async function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response: ${outcome}`);
+                deferredPrompt = null;
+            }
+        }
+    </script>
 </body>
 </html>
 
