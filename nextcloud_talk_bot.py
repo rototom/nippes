@@ -276,11 +276,6 @@ class NextcloudTalkBot:
                     print(f"⚠ API nicht erreichbar ({e}), überspringe Antwort")
                     continue
                 
-                # Begrenze die Größe des Sets (älteste Einträge entfernen)
-                if len(self.processed_messages) > 1000:
-                    # Entferne die ältesten 500 Einträge
-                    self.processed_messages = set(list(self.processed_messages)[500:])
-                
                 # Hole Status und antworte
                 status = self.get_nippes_status()
                 response_message = self.format_status_message(status)
