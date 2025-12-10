@@ -101,39 +101,53 @@ class NextcloudTalkBot:
     
     def get_messages(self, token, limit=50):
         """Holt die letzten Nachrichten einer Konversation."""
-        url = f"{self.base_url}/ocs/v2.php/apps/spreed/api/v1/chat/{token}"
-        params = {'limit': limit}
-        try:
-            response = self.session.get(url, params=params)
-            
-            # Prüfe Status Code
-            if response.status_code == 500:
-                # 500 Fehler - möglicherweise keine Berechtigung oder API-Problem
-                print(f"⚠ Warnung: 500 Fehler beim Abrufen von Nachrichten für Konversation {token}")
-                print(f"   Mögliche Ursachen: Bot hat keine Berechtigung oder Konversation existiert nicht")
+        # Versuche verschiedene API-Endpunkte
+        endpoints = [
+            f"{self.base_url}/ocs/v2.php/apps/spreed/api/v1/chat/{token}",
+            f"{self.base_url}/ocs/v2.php/apps/spreed/api/v4/chat/{token}",
+        ]
+        
+        for url in endpoints:
+            params = {'limit': limit}
+            try:
+                response = self.session.get(url, params=params)
+                
+                # Prüfe Status Code
+                if response.status_code == 500:
+                    # Versuche nächsten Endpoint
+                    continue
+                
+                if response.status_code == 404:
+                    # Endpoint existiert nicht, versuche nächsten
+                    continue
+                
+                response.raise_for_status()
+                
+                # Prüfe Content-Type
+                content_type = response.headers.get('Content-Type', '')
+                if 'application/json' not in content_type:
+                    continue
+                
+                data = response.json()
+                if 'ocs' in data and 'data' in data['ocs']:
+                    return data['ocs']['data']
+                elif isinstance(data, list):
+                    # Manche APIs geben direkt eine Liste zurück
+                    return data
+                    
+            except requests.exceptions.HTTPError as e:
+                if response.status_code in [404, 500]:
+                    # Versuche nächsten Endpoint
+                    continue
+                print(f"HTTP Fehler beim Abrufen der Nachrichten für {token}: {e}")
                 return []
-            
-            response.raise_for_status()
-            
-            # Prüfe Content-Type
-            content_type = response.headers.get('Content-Type', '')
-            if 'application/json' not in content_type:
-                print(f"⚠ Warnung: Antwort ist kein JSON für Konversation {token}")
-                return []
-            
-            data = response.json()
-            if 'ocs' in data and 'data' in data['ocs']:
-                return data['ocs']['data']
-            return []
-        except requests.exceptions.HTTPError as e:
-            if response.status_code == 500:
-                # Ignoriere 500 Fehler stillschweigend (Berechtigungsproblem)
-                return []
-            print(f"HTTP Fehler beim Abrufen der Nachrichten für {token}: {e}")
-            return []
-        except Exception as e:
-            print(f"Fehler beim Abrufen der Nachrichten für {token}: {e}")
-            return []
+            except Exception as e:
+                # Versuche nächsten Endpoint
+                continue
+        
+        # Alle Endpoints fehlgeschlagen - möglicherweise Berechtigungsproblem
+        # Gebe keine Warnung aus, da dies bei vielen Konversationen zu viel Output erzeugt
+        return []
     
     def send_message(self, token, message):
         """Sendet eine Nachricht in eine Konversation."""
