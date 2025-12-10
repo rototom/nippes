@@ -236,12 +236,6 @@ class NextcloudTalkBot:
             actor_display_name = msg.get('actorDisplayName', actor_id)
             message_id = msg.get('id', 'unknown')
             
-            # WICHTIG: Prüfe ob diese Nachricht bereits verarbeitet wurde
-            message_key = (token, message_id)
-            if message_key in self.processed_messages:
-                # Nachricht bereits verarbeitet, überspringe
-                continue
-            
             # Ignoriere eigene Nachrichten
             if actor_id == self.username:
                 continue
@@ -254,25 +248,33 @@ class NextcloudTalkBot:
                     break
             
             if matched_trigger:
-                # Prüfe ob API erreichbar ist BEVOR wir antworten
+                # WICHTIG: Markiere Nachricht SOFORT als verarbeitet, um Doppelantworten zu vermeiden
+                message_key = (token, message_id)
+                if message_key in self.processed_messages:
+                    # Nachricht bereits verarbeitet, überspringe
+                    continue
+                
+                # Markiere Nachricht als verarbeitet BEVOR wir irgendetwas tun
+                self.processed_messages.add(message_key)
+                
+                # Begrenze die Größe des Sets (älteste Einträge entfernen)
+                if len(self.processed_messages) > 1000:
+                    # Entferne die ältesten 500 Einträge
+                    self.processed_messages = set(list(self.processed_messages)[500:])
+                
+                # Prüfe ob API erreichbar ist
                 try:
                     test_response = requests.get(NIPPES_API_URL, timeout=2, verify=False)
                     if test_response.status_code != 200:
-                        print(f"⚠ API nicht erreichbar (Status {test_response.status_code})")
+                        print(f"⚠ API nicht erreichbar (Status {test_response.status_code}), überspringe Antwort")
                         print(f"   URL: {NIPPES_API_URL}")
-                        print(f"   Response: {test_response.text[:200]}")
                         continue
                 except requests.exceptions.SSLError as e:
-                    print(f"⚠ SSL-Fehler bei API-Aufruf: {e}")
-                    print(f"   URL: {NIPPES_API_URL}")
+                    print(f"⚠ SSL-Fehler bei API-Aufruf: {e}, überspringe Antwort")
                     continue
                 except Exception as e:
-                    print(f"⚠ API nicht erreichbar ({e})")
-                    print(f"   URL: {NIPPES_API_URL}")
+                    print(f"⚠ API nicht erreichbar ({e}), überspringe Antwort")
                     continue
-                
-                # Markiere Nachricht als verarbeitet BEVOR wir antworten
-                self.processed_messages.add(message_key)
                 
                 # Begrenze die Größe des Sets (älteste Einträge entfernen)
                 if len(self.processed_messages) > 1000:
