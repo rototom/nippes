@@ -15,6 +15,26 @@ import json
 import os
 from datetime import datetime
 
+# Lade .env Datei falls vorhanden
+def load_env_file():
+    """Lädt Umgebungsvariablen aus .env Datei."""
+    env_file = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(env_file):
+        with open(env_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                # Überspringe Kommentare und leere Zeilen
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip().strip('"').strip("'")
+                    # Setze nur wenn nicht bereits als Umgebungsvariable gesetzt
+                    if key not in os.environ:
+                        os.environ[key] = value
+
+# Lade .env Datei
+load_env_file()
+
 # Konfiguration - Bitte anpassen!
 NEXTCLOUD_URL = os.environ.get('NEXTCLOUD_URL', 'https://deine-nextcloud.de')
 BOT_USERNAME = os.environ.get('BOT_USERNAME', 'nippes-bot')
