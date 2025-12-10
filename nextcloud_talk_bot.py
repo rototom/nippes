@@ -119,62 +119,47 @@ class NextcloudTalkBot:
                     
                     # Prüfe Status Code
                     if response.status_code == 500:
-                    print(f"    → API {version}: Status 500 (Server-Fehler)")
-                    # Versuche Fehlermeldung aus der Antwort zu extrahieren
-                    try:
-                        error_data = response.json()
-                        if 'ocs' in error_data and 'meta' in error_data['ocs']:
-                            error_msg = error_data['ocs']['meta'].get('message', 'Unbekannter Fehler')
-                            print(f"      Fehlermeldung: {error_msg}")
-                        elif 'message' in error_data:
-                            print(f"      Fehlermeldung: {error_data['message']}")
-                        else:
-                            print(f"      Response: {response.text[:200]}")
-                    except:
-                        print(f"      Response: {response.text[:200]}")
-                    # Versuche nächsten Endpoint
-                    continue
-                
-                if response.status_code == 404:
-                    print(f"    → API {version}: Status 404 (Nicht gefunden)")
-                    # Versuche nächsten Endpoint
-                    continue
-                
-                if response.status_code == 403:
-                    print(f"    → API {version}: Status 403 (Keine Berechtigung)")
-                    # Versuche nächsten Endpoint
-                    continue
-                
-                response.raise_for_status()
-                
-                # Prüfe Content-Type
-                content_type = response.headers.get('Content-Type', '')
-                if 'application/json' not in content_type:
-                    print(f"    → API {version}: Kein JSON (Content-Type: {content_type})")
-                    continue
-                
-                data = response.json()
-                if 'ocs' in data and 'data' in data['ocs']:
-                    messages = data['ocs']['data']
-                    print(f"    → API {version}: {len(messages)} Nachrichten gefunden")
-                    return messages
-                elif isinstance(data, list):
-                    # Manche APIs geben direkt eine Liste zurück
-                    print(f"    → API {version}: {len(data)} Nachrichten gefunden (direkte Liste)")
-                    return data
-                else:
-                    print(f"    → API {version}: Unerwartete Datenstruktur: {type(data)}")
+                        # Versuche nächste Parameter-Kombination
+                        continue
                     
-            except requests.exceptions.HTTPError as e:
-                if response.status_code in [404, 500, 403]:
-                    # Versuche nächsten Endpoint
+                    if response.status_code == 404:
+                        # Versuche nächste Parameter-Kombination
+                        continue
+                    
+                    if response.status_code == 403:
+                        # Versuche nächste Parameter-Kombination
+                        continue
+                    
+                    response.raise_for_status()
+                    
+                    # Prüfe Content-Type
+                    content_type = response.headers.get('Content-Type', '')
+                    if 'application/json' not in content_type:
+                        # Versuche nächste Parameter-Kombination
+                        continue
+                    
+                    data = response.json()
+                    if 'ocs' in data and 'data' in data['ocs']:
+                        messages = data['ocs']['data']
+                        print(f"    → API {version} mit Parametern {params}: {len(messages)} Nachrichten gefunden")
+                        return messages
+                    elif isinstance(data, list):
+                        # Manche APIs geben direkt eine Liste zurück
+                        print(f"    → API {version} mit Parametern {params}: {len(data)} Nachrichten gefunden (direkte Liste)")
+                        return data
+                    else:
+                        # Versuche nächste Parameter-Kombination
+                        continue
+                        
+                except requests.exceptions.HTTPError as e:
+                    if response.status_code in [404, 500, 403]:
+                        # Versuche nächste Parameter-Kombination
+                        continue
+                    # Versuche nächste Parameter-Kombination
                     continue
-                print(f"    → API {version}: HTTP Fehler: {e}")
-                return []
-            except Exception as e:
-                print(f"    → API {version}: Exception: {e}")
-                # Versuche nächsten Endpoint
-                continue
+                except Exception as e:
+                    # Versuche nächste Parameter-Kombination
+                    continue
         
         # Alle Endpoints fehlgeschlagen
         print(f"    → Alle API-Endpunkte fehlgeschlagen für {token}")
