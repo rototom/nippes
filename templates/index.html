@@ -96,6 +96,14 @@
             color: #667eea;
             text-decoration: none;
         }
+        
+        .last-update {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 11px;
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -125,6 +133,12 @@
             <p>Öffnungszeiten: Mittwoch bis Samstag</p>
             <p><a href="https://www.nippes-muenster.de/" target="_blank">Zur offiziellen Website</a></p>
         </div>
+        
+        {% if last_update %}
+        <div class="last-update">
+            <p>Letzte Aktualisierung: {{ last_update.strftime('%d.%m.%Y um %H:%M Uhr') }}</p>
+        </div>
+        {% endif %}
     </div>
 </body>
 </html>

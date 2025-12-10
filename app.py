@@ -102,16 +102,17 @@ def get_closed_dates():
         
         if cached_dates is not None:
             print(f"Verwende gecachte Daten vom {cache_time.strftime('%Y-%m-%d %H:%M:%S')}")
-            return cached_dates
+            return cached_dates, cache_time
         
         # Cache ist abgelaufen oder nicht vorhanden, crawle neu
         print("Cache abgelaufen oder nicht vorhanden, crawle Website neu...")
         closed_dates = crawl_closed_dates()
         save_cached_dates(closed_dates)
+        now = datetime.now()
         print(f"Neue Daten gecrawlt: {len(closed_dates)} geschlossene Termine gefunden")
-        return closed_dates
+        return closed_dates, now
 
-def is_open_today():
+def is_open_today(closed_dates):
     """Prüft, ob das Nippes heute geöffnet ist."""
     today = datetime.now().date()
     weekday = today.weekday()  # 0 = Montag, 6 = Sonntag
@@ -121,7 +122,6 @@ def is_open_today():
         return False, "Heute ist nicht Mittwoch bis Samstag"
     
     # Prüfe auf geschlossene Gesellschaften
-    closed_dates = get_closed_dates()
     if today in closed_dates:
         return False, "Heute ist geschlossene Gesellschaft"
     
@@ -130,17 +130,21 @@ def is_open_today():
 @app.route('/')
 def index():
     """Hauptseite, die den Öffnungsstatus anzeigt."""
-    is_open, message = is_open_today()
+    # Hole geschlossene Daten und Zeitstempel
+    closed_dates, last_update = get_closed_dates()
+    
+    # Prüfe Öffnungsstatus
+    is_open, message = is_open_today(closed_dates)
     
     # Hole auch die nächsten geschlossenen Termine für Info
-    closed_dates = get_closed_dates()
     today = datetime.now().date()
     upcoming_closed = sorted([d for d in closed_dates if d >= today])[:5]
     
     return render_template('index.html', 
                          is_open=is_open, 
                          message=message,
-                         upcoming_closed=upcoming_closed)
+                         upcoming_closed=upcoming_closed,
+                         last_update=last_update)
 
 @app.route('/refresh')
 def refresh_cache():
