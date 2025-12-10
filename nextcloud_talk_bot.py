@@ -225,7 +225,32 @@ def main():
         print("export NIPPES_API_URL='http://localhost:5001/api/status'")
         return 1
     
+    # Zeige Konfiguration (ohne Passwort)
+    print("=== Bot Konfiguration ===")
+    print(f"Nextcloud URL: {NEXTCLOUD_URL}")
+    print(f"Bot Username: {BOT_USERNAME}")
+    print(f"Bot Password: {'*' * len(BOT_PASSWORD) if BOT_PASSWORD else 'NICHT GESETZT'}")
+    print(f"Nippes API URL: {NIPPES_API_URL}")
+    print("=" * 30)
+    print()
+    
+    # Teste Verbindung
+    print("Teste Nextcloud-Verbindung...")
     bot = NextcloudTalkBot()
+    test_url = f"{bot.base_url}/ocs/v2.php/apps/spreed/api/v4/room"
+    try:
+        test_response = bot.session.get(test_url)
+        print(f"Test Request Status: {test_response.status_code}")
+        if test_response.status_code == 200:
+            print("✓ Verbindung erfolgreich!")
+        else:
+            print(f"⚠ Status Code: {test_response.status_code}")
+            print(f"Response: {test_response.text[:200]}")
+    except Exception as e:
+        print(f"✗ Verbindungstest fehlgeschlagen: {e}")
+        return 1
+    
+    print()
     bot.run()
     return 0
 
