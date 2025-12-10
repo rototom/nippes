@@ -1,0 +1,16 @@
+[Unit]
+Description=Nippes Öffnungsstatus Webseite
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/nippes
+Environment="PATH=/root/nippes/.venv/bin"
+ExecStart=/root/nippes/.venv/bin/python -m gunicorn --bind 0.0.0.0:5001 --workers 2 --timeout 30 app:app
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+

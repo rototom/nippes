@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ist das Nippes heute geöffnet?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .status {
+            font-size: 72px;
+            margin: 30px 0;
+            font-weight: bold;
+        }
+        
+        .open {
+            color: #10b981;
+        }
+        
+        .closed {
+            color: #ef4444;
+        }
+        
+        .message {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .info {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .info h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .info ul {
+            list-style: none;
+            text-align: left;
+        }
+        
+        .info li {
+            padding: 8px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .info li:before {
+            content: "📅 ";
+            margin-right: 8px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ist das Nippes heute geöffnet?</h1>
+        
+        {% if is_open %}
+            <div class="status open">✓ 🍺</div>
+            <div class="message">{{ message }}</div>
+        {% else %}
+            <div class="status closed">✗ 😢</div>
+            <div class="message">{{ message }}</div>
+        {% endif %}
+        
+        {% if upcoming_closed %}
+        <div class="info">
+            <h2>Kommende geschlossene Gesellschaften:</h2>
+            <ul>
+                {% for date in upcoming_closed %}
+                <li>{{ date.strftime('%d.%m.%Y') }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <div class="footer">
+            <p>Öffnungszeiten: Mittwoch bis Samstag</p>
+            <p><a href="https://www.nippes-muenster.de/" target="_blank">Zur offiziellen Website</a></p>
+        </div>
+    </div>
+</body>
+</html>
+
