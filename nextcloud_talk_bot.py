@@ -63,15 +63,10 @@ class NextcloudTalkBot:
         try:
             response = self.session.get(url)
             
-            # Debug: Zeige Status und erste Zeilen der Antwort
-            print(f"API Request: {url}")
-            print(f"Status Code: {response.status_code}")
-            print(f"Response Headers: {dict(response.headers)}")
-            
             # Prüfe ob Antwort JSON ist
             content_type = response.headers.get('Content-Type', '')
             if 'application/json' not in content_type:
-                print(f"WARNUNG: Antwort ist kein JSON! Content-Type: {content_type}")
+                print(f"⚠ WARNUNG: Antwort ist kein JSON! Content-Type: {content_type}")
                 print(f"Erste 500 Zeichen der Antwort: {response.text[:500]}")
             
             response.raise_for_status()
@@ -80,21 +75,21 @@ class NextcloudTalkBot:
             try:
                 data = response.json()
             except json.JSONDecodeError as e:
-                print(f"JSON Parse Fehler: {e}")
+                print(f"⚠ JSON Parse Fehler: {e}")
                 print(f"Response Text: {response.text[:1000]}")
                 return []
             
             if 'ocs' in data and 'data' in data['ocs']:
                 return data['ocs']['data']
             else:
-                print(f"Unerwartete Antwort-Struktur: {data}")
+                print(f"⚠ Unerwartete Antwort-Struktur: {data}")
                 return []
         except requests.exceptions.HTTPError as e:
-            print(f"HTTP Fehler beim Abrufen der Konversationen: {e}")
+            print(f"✗ HTTP Fehler beim Abrufen der Konversationen: {e}")
             print(f"Response: {response.text[:500] if 'response' in locals() else 'Keine Antwort'}")
             return []
         except Exception as e:
-            print(f"Fehler beim Abrufen der Konversationen: {e}")
+            print(f"✗ Fehler beim Abrufen der Konversationen: {e}")
             import traceback
             traceback.print_exc()
             return []
