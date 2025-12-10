@@ -208,19 +208,68 @@ class NextcloudTalkBot:
         
         return message
     
-    def __init__(self):
-        self.base_url = NEXTCLOUD_URL.rstrip('/')
-        self.username = BOT_USERNAME
-        self.password = BOT_PASSWORD
-        self.session = requests.Session()
-        self.session.auth = (self.username, self.password)
-        self.session.headers.update({
-            'OCS-APIRequest': 'true',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        })
-        # Track bereits verarbeitete Nachrichten, um Doppelantworten zu vermeiden
-        self.processed_messages = set()  # Set von (token, message_id) Tupeln
+    def check_and_respond(self, token, conversation_name=None):
+        """Prüft neue Nachrichten und antwortet bei Bedarf."""
+        messages = self.get_messages(token)
+        
+        # Wenn keine Nachrichten verfügbar (z.B. wegen Berechtigungsproblemen)
+        if not messages:
+            return False
+        
+        # Prüfe die letzten Nachrichten
+        for msg in reversed(messages):  # Von alt nach neu
+            message_text = msg.get('message', '').lower()
+            actor_id = msg.get('actorId', '')
+            actor_display_name = msg.get('actorDisplayName', actor_id)
+            message_id = msg.get('id', 'unknown')
+            
+            # WICHTIG: Prüfe ob diese Nachricht bereits verarbeitet wurde
+            message_key = (token, message_id)
+            if message_key in self.processed_messages:
+                # Nachricht bereits verarbeitet, überspringe
+                continue
+            
+            # Ignoriere eigene Nachrichten
+            if actor_id == self.username:
+                continue
+            
+            # Prüfe auf Trigger-Wörter
+            matched_trigger = None
+            for trigger in TRIGGER_WORDS:
+                if trigger in message_text:
+                    matched_trigger = trigger
+                    break
+            
+            if matched_trigger:
+                # Prüfe ob API erreichbar ist BEVOR wir antworten
+                try:
+                    test_response = requests.get(NIPPES_API_URL, timeout=2)
+                    if test_response.status_code != 200:
+                        print(f"⚠ API nicht erreichbar (Status {test_response.status_code}), überspringe Antwort")
+                        continue
+                except Exception as e:
+                    print(f"⚠ API nicht erreichbar ({e}), überspringe Antwort")
+                    continue
+                
+                # Markiere Nachricht als verarbeitet BEVOR wir antworten
+                self.processed_messages.add(message_key)
+                
+                # Begrenze die Größe des Sets (älteste Einträge entfernen)
+                if len(self.processed_messages) > 1000:
+                    # Entferne die ältesten 500 Einträge
+                    self.processed_messages = set(list(self.processed_messages)[500:])
+                
+                # Hole Status und antworte
+                status = self.get_nippes_status()
+                response_message = self.format_status_message(status)
+                if self.send_message(token, response_message):
+                    conv_info = f" ({conversation_name})" if conversation_name else ""
+                    print(f"✓ Antwort gesendet in Konversation {token}{conv_info} (auf Nachricht von {actor_display_name})")
+                    return True
+                else:
+                    print(f"✗ Fehler beim Senden der Antwort in Konversation {token}")
+        
+        return False
     
     def run(self):
         """Hauptschleife des Bots."""
