@@ -275,17 +275,27 @@ class NextcloudTalkBot:
                             continue
                     
                     # Überspringe Konversationen mit zu vielen Fehlern
-                    if error_count.get(token, 0) > 5:
-                        if error_count[token] == 6:  # Nur einmal warnen
+                    if error_count.get(token, 0) > 10:
+                        if error_count[token] == 11:  # Nur einmal warnen
                             print(f"⚠ Überspringe Konversation {token} ({name}) wegen wiederholter Fehler")
                         continue
                     
+                    # Debug: Zeige welche Konversation geprüft wird
+                    print(f"\nPrüfe Konversation: {name} (Typ: {conv_type}, Token: {token})")
+                    
                     try:
-                        self.check_and_respond(token, name)
-                        error_count[token] = 0  # Reset Fehlerzähler bei Erfolg
+                        if self.check_and_respond(token, name):
+                            error_count[token] = 0  # Reset Fehlerzähler bei Erfolg
+                        else:
+                            # Wenn keine Nachrichten verfügbar waren, reduziere Fehlerzähler langsam
+                            if error_count.get(token, 0) > 0:
+                                error_count[token] = max(0, error_count[token] - 1)
                     except Exception as e:
                         error_count[token] = error_count.get(token, 0) + 1
-                        print(f"Fehler in Konversation {token} ({name}): {e}")
+                        if error_count[token] <= 3:  # Nur erste Fehler ausgeben
+                            print(f"✗ Fehler in Konversation {token} ({name}): {e}")
+                        import traceback
+                        traceback.print_exc()
                     
                     last_check[token] = time.time()
                 
