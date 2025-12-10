@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
@@ -174,12 +174,12 @@ def api_status():
         if upcoming_closed:
             response['upcoming_closed'] = [d.strftime('%d.%m.%Y') for d in upcoming_closed]
         
-        return response, 200
+        return jsonify(response), 200
     except Exception as e:
-        return {
+        return jsonify({
             'is_open': False,
             'message': f'Fehler beim Abrufen des Status: {str(e)}'
-        }, 500
+        }), 500
 
 @app.route('/refresh')
 def refresh_cache():
