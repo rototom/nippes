@@ -206,55 +206,19 @@ class NextcloudTalkBot:
         
         return message
     
-    def check_and_respond(self, token, conversation_name=None):
-        """Prüft neue Nachrichten und antwortet bei Bedarf."""
-        messages = self.get_messages(token)
-        
-        # Wenn keine Nachrichten verfügbar (z.B. wegen Berechtigungsproblemen)
-        if not messages:
-            return False
-        
-        # Debug: Zeige Anzahl der Nachrichten
-        if len(messages) > 0:
-            print(f"  → {len(messages)} Nachrichten in {conversation_name or token} gefunden")
-        
-        # Prüfe die letzten Nachrichten
-        for msg in reversed(messages):  # Von alt nach neu
-            message_text = msg.get('message', '').lower()
-            actor_id = msg.get('actorId', '')
-            actor_display_name = msg.get('actorDisplayName', actor_id)
-            message_id = msg.get('id', 'unknown')
-            
-            # Debug: Zeige gefundene Nachricht
-            print(f"    Nachricht #{message_id} von {actor_display_name}: '{message_text[:50]}...'")
-            
-            # Ignoriere eigene Nachrichten
-            if actor_id == self.username:
-                print(f"    → Ignoriert (eigene Nachricht)")
-                continue
-            
-            # Prüfe auf Trigger-Wörter
-            matched_trigger = None
-            for trigger in TRIGGER_WORDS:
-                if trigger in message_text:
-                    matched_trigger = trigger
-                    break
-            
-            if matched_trigger:
-                print(f"    → Trigger gefunden: '{matched_trigger}'")
-                # Hole Status und antworte
-                status = self.get_nippes_status()
-                response_message = self.format_status_message(status)
-                if self.send_message(token, response_message):
-                    conv_info = f" ({conversation_name})" if conversation_name else ""
-                    print(f"✓ Antwort gesendet in Konversation {token}{conv_info} (auf Nachricht von {actor_display_name})")
-                    return True
-                else:
-                    print(f"✗ Fehler beim Senden der Antwort in Konversation {token}")
-            else:
-                print(f"    → Kein Trigger gefunden")
-        
-        return False
+    def __init__(self):
+        self.base_url = NEXTCLOUD_URL.rstrip('/')
+        self.username = BOT_USERNAME
+        self.password = BOT_PASSWORD
+        self.session = requests.Session()
+        self.session.auth = (self.username, self.password)
+        self.session.headers.update({
+            'OCS-APIRequest': 'true',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        })
+        # Track bereits verarbeitete Nachrichten, um Doppelantworten zu vermeiden
+        self.processed_messages = set()  # Set von (token, message_id) Tupeln
     
     def run(self):
         """Hauptschleife des Bots."""
