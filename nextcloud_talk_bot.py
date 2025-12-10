@@ -256,12 +256,19 @@ class NextcloudTalkBot:
             if matched_trigger:
                 # Prüfe ob API erreichbar ist BEVOR wir antworten
                 try:
-                    test_response = requests.get(NIPPES_API_URL, timeout=2)
+                    test_response = requests.get(NIPPES_API_URL, timeout=2, verify=False)
                     if test_response.status_code != 200:
-                        print(f"⚠ API nicht erreichbar (Status {test_response.status_code}), überspringe Antwort")
+                        print(f"⚠ API nicht erreichbar (Status {test_response.status_code})")
+                        print(f"   URL: {NIPPES_API_URL}")
+                        print(f"   Response: {test_response.text[:200]}")
                         continue
+                except requests.exceptions.SSLError as e:
+                    print(f"⚠ SSL-Fehler bei API-Aufruf: {e}")
+                    print(f"   URL: {NIPPES_API_URL}")
+                    continue
                 except Exception as e:
-                    print(f"⚠ API nicht erreichbar ({e}), überspringe Antwort")
+                    print(f"⚠ API nicht erreichbar ({e})")
+                    print(f"   URL: {NIPPES_API_URL}")
                     continue
                 
                 # Markiere Nachricht als verarbeitet BEVOR wir antworten
