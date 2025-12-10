@@ -56,6 +56,8 @@ class NextcloudTalkBot:
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         })
+        # Track bereits verarbeitete Nachrichten, um Doppelantworten zu vermeiden
+        self.processed_messages = set()  # Set von (token, message_id) Tupeln
     
     def get_conversations(self):
         """Holt alle Konversationen des Bots."""
