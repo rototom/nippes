@@ -237,7 +237,11 @@ class NextcloudTalkBot:
                     time.sleep(30)  # Warte länger wenn keine Konversationen
                     continue
                 
-                print(f"Überwache {len(conversations)} Konversation(en)...")
+                # Zeige Status nur alle 60 Sekunden, um Logs ruhiger zu halten
+                current_time = time.time()
+                if not hasattr(self, '_last_status_time') or current_time - self._last_status_time > 60:
+                    print(f"✓ Überwache {len(conversations)} Konversation(en)...")
+                    self._last_status_time = current_time
                 
                 for conv in conversations:
                     token = conv.get('token')
