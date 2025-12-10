@@ -176,14 +176,19 @@ class NextcloudTalkBot:
         
         return message
     
-    def check_and_respond(self, token):
+    def check_and_respond(self, token, conversation_name=None):
         """Prüft neue Nachrichten und antwortet bei Bedarf."""
         messages = self.get_messages(token)
+        
+        # Wenn keine Nachrichten verfügbar (z.B. wegen Berechtigungsproblemen)
+        if not messages:
+            return False
         
         # Prüfe die letzten Nachrichten
         for msg in reversed(messages):  # Von alt nach neu
             message_text = msg.get('message', '').lower()
             actor_id = msg.get('actorId', '')
+            actor_display_name = msg.get('actorDisplayName', actor_id)
             
             # Ignoriere eigene Nachrichten
             if actor_id == self.username:
@@ -194,9 +199,12 @@ class NextcloudTalkBot:
                 # Hole Status und antworte
                 status = self.get_nippes_status()
                 response_message = self.format_status_message(status)
-                self.send_message(token, response_message)
-                print(f"Antwort gesendet in Konversation {token}")
-                return True
+                if self.send_message(token, response_message):
+                    conv_info = f" ({conversation_name})" if conversation_name else ""
+                    print(f"✓ Antwort gesendet in Konversation {token}{conv_info} (auf Nachricht von {actor_display_name})")
+                    return True
+                else:
+                    print(f"✗ Fehler beim Senden der Antwort in Konversation {token}")
         
         return False
     
