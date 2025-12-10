@@ -193,18 +193,34 @@ class NextcloudTalkBot:
         if not messages:
             return False
         
+        # Debug: Zeige Anzahl der Nachrichten
+        if len(messages) > 0:
+            print(f"  → {len(messages)} Nachrichten in {conversation_name or token} gefunden")
+        
         # Prüfe die letzten Nachrichten
         for msg in reversed(messages):  # Von alt nach neu
             message_text = msg.get('message', '').lower()
             actor_id = msg.get('actorId', '')
             actor_display_name = msg.get('actorDisplayName', actor_id)
+            message_id = msg.get('id', 'unknown')
+            
+            # Debug: Zeige gefundene Nachricht
+            print(f"    Nachricht #{message_id} von {actor_display_name}: '{message_text[:50]}...'")
             
             # Ignoriere eigene Nachrichten
             if actor_id == self.username:
+                print(f"    → Ignoriert (eigene Nachricht)")
                 continue
             
             # Prüfe auf Trigger-Wörter
-            if any(trigger in message_text for trigger in TRIGGER_WORDS):
+            matched_trigger = None
+            for trigger in TRIGGER_WORDS:
+                if trigger in message_text:
+                    matched_trigger = trigger
+                    break
+            
+            if matched_trigger:
+                print(f"    → Trigger gefunden: '{matched_trigger}'")
                 # Hole Status und antworte
                 status = self.get_nippes_status()
                 response_message = self.format_status_message(status)
@@ -214,6 +230,8 @@ class NextcloudTalkBot:
                     return True
                 else:
                     print(f"✗ Fehler beim Senden der Antwort in Konversation {token}")
+            else:
+                print(f"    → Kein Trigger gefunden")
         
         return False
     
