@@ -1,6 +1,7 @@
 [Unit]
 Description=Nippes Nextcloud Talk Bot
-After=network.target
+After=network.target nippes.service
+Requires=nippes.service
 
 [Service]
 Type=simple

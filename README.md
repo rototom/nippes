@@ -36,6 +36,8 @@ Die Webseite ist dann unter `http://localhost:5001` erreichbar.
 
 ### Production mit systemd
 
+#### Flask-App (Hauptservice)
+
 1. Service-File kopieren:
 ```bash
 sudo cp nippes.service /etc/systemd/system/
@@ -57,6 +59,38 @@ sudo systemctl status nippes.service
 ```bash
 sudo journalctl -u nippes.service -f
 ```
+
+#### Nextcloud Talk Bot (Optional)
+
+1. Stelle sicher, dass die `.env` Datei existiert und korrekt konfiguriert ist:
+```bash
+cp nextcloud_bot_config.env.example .env
+# Bearbeite .env und trage deine Werte ein
+```
+
+2. Service-File kopieren:
+```bash
+sudo cp nippes-talk-bot.service /etc/systemd/system/
+```
+
+3. Service aktivieren und starten:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable nippes-talk-bot.service
+sudo systemctl start nippes-talk-bot.service
+```
+
+4. Status prüfen:
+```bash
+sudo systemctl status nippes-talk-bot.service
+```
+
+5. Logs ansehen:
+```bash
+sudo journalctl -u nippes-talk-bot.service -f
+```
+
+**Hinweis:** Der Bot-Service startet automatisch nach dem Flask-App-Service (`After=nippes.service`).
 
 ## Technologie
 
