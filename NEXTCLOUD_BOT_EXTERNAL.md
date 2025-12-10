@@ -50,7 +50,10 @@ Bearbeite `.env` und trage deine Werte ein:
 NEXTCLOUD_URL=https://deine-nextcloud.de
 BOT_USERNAME=nippes-bot
 BOT_PASSWORD=dein-app-passwort
+# Wenn Bot und Flask-App auf demselben Server (empfohlen):
 NIPPES_API_URL=http://localhost:5001/api/status
+# Wenn Bot auf anderem Server:
+# NIPPES_API_URL=https://nippes.okaris.de/api/status
 ```
 
 ### 3. Umgebungsvariablen setzen
