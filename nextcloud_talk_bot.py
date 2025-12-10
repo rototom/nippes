@@ -182,10 +182,23 @@ class NextcloudTalkBot:
     def get_nippes_status(self):
         """Holt den Nippes-Status von der API."""
         try:
-            response = requests.get(NIPPES_API_URL, timeout=5)
+            response = requests.get(NIPPES_API_URL, timeout=5, verify=False)
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.SSLError as e:
+            print(f"⚠ SSL-Fehler bei API-Aufruf: {e}")
+            # Versuche ohne SSL-Verifizierung
+            try:
+                response = requests.get(NIPPES_API_URL, timeout=5, verify=False)
+                response.raise_for_status()
+                return response.json()
+            except Exception as e2:
+                return {
+                    'is_open': False,
+                    'message': f'Fehler beim Abrufen des Status: {str(e2)}'
+                }
         except Exception as e:
+            print(f"⚠ Fehler beim API-Aufruf: {e}")
             return {
                 'is_open': False,
                 'message': f'Fehler beim Abrufen des Status: {str(e)}'
