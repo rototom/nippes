@@ -105,13 +105,34 @@ class NextcloudTalkBot:
         params = {'limit': limit}
         try:
             response = self.session.get(url, params=params)
+            
+            # Prüfe Status Code
+            if response.status_code == 500:
+                # 500 Fehler - möglicherweise keine Berechtigung oder API-Problem
+                print(f"⚠ Warnung: 500 Fehler beim Abrufen von Nachrichten für Konversation {token}")
+                print(f"   Mögliche Ursachen: Bot hat keine Berechtigung oder Konversation existiert nicht")
+                return []
+            
             response.raise_for_status()
+            
+            # Prüfe Content-Type
+            content_type = response.headers.get('Content-Type', '')
+            if 'application/json' not in content_type:
+                print(f"⚠ Warnung: Antwort ist kein JSON für Konversation {token}")
+                return []
+            
             data = response.json()
             if 'ocs' in data and 'data' in data['ocs']:
                 return data['ocs']['data']
             return []
+        except requests.exceptions.HTTPError as e:
+            if response.status_code == 500:
+                # Ignoriere 500 Fehler stillschweigend (Berechtigungsproblem)
+                return []
+            print(f"HTTP Fehler beim Abrufen der Nachrichten für {token}: {e}")
+            return []
         except Exception as e:
-            print(f"Fehler beim Abrufen der Nachrichten: {e}")
+            print(f"Fehler beim Abrufen der Nachrichten für {token}: {e}")
             return []
     
     def send_message(self, token, message):
@@ -185,15 +206,27 @@ class NextcloudTalkBot:
         print(f"Nextcloud URL: {self.base_url}")
         print(f"Nippes API: {NIPPES_API_URL}")
         print("Bot läuft... Drücke Ctrl+C zum Beenden")
+        print()
         
         last_check = {}
+        error_count = {}
         
         try:
             while True:
                 conversations = self.get_conversations()
                 
+                if not conversations:
+                    print("⚠ Keine Konversationen gefunden. Stelle sicher, dass der Bot Mitglied in Talk-Konversationen ist.")
+                    time.sleep(30)  # Warte länger wenn keine Konversationen
+                    continue
+                
+                print(f"Überwache {len(conversations)} Konversation(en)...")
+                
                 for conv in conversations:
                     token = conv.get('token')
+                    name = conv.get('displayName', conv.get('name', 'Unbekannt'))
+                    conv_type = conv.get('type', 'unknown')
+                    
                     if not token:
                         continue
                     
@@ -202,7 +235,19 @@ class NextcloudTalkBot:
                         if time.time() - last_check[token] < 10:
                             continue
                     
-                    self.check_and_respond(token)
+                    # Überspringe Konversationen mit zu vielen Fehlern
+                    if error_count.get(token, 0) > 5:
+                        if error_count[token] == 6:  # Nur einmal warnen
+                            print(f"⚠ Überspringe Konversation {token} ({name}) wegen wiederholter Fehler")
+                        continue
+                    
+                    try:
+                        self.check_and_respond(token, name)
+                        error_count[token] = 0  # Reset Fehlerzähler bei Erfolg
+                    except Exception as e:
+                        error_count[token] = error_count.get(token, 0) + 1
+                        print(f"Fehler in Konversation {token} ({name}): {e}")
+                    
                     last_check[token] = time.time()
                 
                 # Warte 5 Sekunden vor dem nächsten Check
@@ -212,6 +257,8 @@ class NextcloudTalkBot:
             print("\nBot wird beendet...")
         except Exception as e:
             print(f"Fehler in der Hauptschleife: {e}")
+            import traceback
+            traceback.print_exc()
 
 def main():
     """Hauptfunktion."""
