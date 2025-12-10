@@ -105,12 +105,20 @@ class NextcloudTalkBot:
         ]
         
         for url, version in endpoints:
-            params = {'limit': limit}
-            try:
-                response = self.session.get(url, params=params)
-                
-                # Prüfe Status Code
-                if response.status_code == 500:
+            # Versuche verschiedene Parameter-Kombinationen
+            param_sets = [
+                {'limit': limit},
+                {'limit': limit, 'lookIntoFuture': '0'},
+                {'limit': limit, 'includeLastRead': '0'},
+                {},  # Keine Parameter
+            ]
+            
+            for params in param_sets:
+                try:
+                    response = self.session.get(url, params=params)
+                    
+                    # Prüfe Status Code
+                    if response.status_code == 500:
                     print(f"    → API {version}: Status 500 (Server-Fehler)")
                     # Versuche Fehlermeldung aus der Antwort zu extrahieren
                     try:
