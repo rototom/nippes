@@ -146,6 +146,41 @@ def index():
                          upcoming_closed=upcoming_closed,
                          last_update=last_update)
 
+@app.route('/api/status')
+def api_status():
+    """API-Endpoint für Bots (z.B. Nextcloud Talk Bot)."""
+    try:
+        closed_dates, last_update = get_closed_dates()
+        is_open, message = is_open_today(closed_dates)
+        
+        today = datetime.now().date()
+        weekday = today.weekday()
+        weekday_names = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+        
+        # Formatiere die Antwort für Chat-Bots
+        emoji = "🍺" if is_open else "😢"
+        status_text = f"{emoji} {message}"
+        
+        # Füge zusätzliche Infos hinzu
+        response = {
+            'is_open': is_open,
+            'message': status_text,
+            'day': weekday_names[weekday],
+            'last_update': last_update.strftime('%d.%m.%Y %H:%M') if last_update else None
+        }
+        
+        # Prüfe auf kommende geschlossene Termine
+        upcoming_closed = sorted([d for d in closed_dates if d >= today])[:3]
+        if upcoming_closed:
+            response['upcoming_closed'] = [d.strftime('%d.%m.%Y') for d in upcoming_closed]
+        
+        return response, 200
+    except Exception as e:
+        return {
+            'is_open': False,
+            'message': f'Fehler beim Abrufen des Status: {str(e)}'
+        }, 500
+
 @app.route('/refresh')
 def refresh_cache():
     """Manueller Endpoint zum Neuladen des Caches."""

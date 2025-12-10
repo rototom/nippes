@@ -41,3 +41,7 @@ Thumbs.db
 # Cache
 closed_dates_cache.json
 
+# Bot Konfiguration
+.env
+nextcloud_bot_config.env
+

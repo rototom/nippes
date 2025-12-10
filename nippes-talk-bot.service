@@ -1,0 +1,16 @@
+[Unit]
+Description=Nippes Nextcloud Talk Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/nippes
+EnvironmentFile=/root/nippes/.env
+ExecStart=/root/nippes/.venv/bin/python /root/nippes/nextcloud_talk_bot.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
